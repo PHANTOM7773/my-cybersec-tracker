@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>//: GHOST_PROTOCOL_INITIATED</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --matrix-green: #00ff41;
+            --scanline-bg: #0a0c0a;
+            --text-color: #c9d1d9;
+            --dark-bg: #0d1117;
+            --border-color: rgba(0, 255, 65, 0.2);
+            --highlight-bg: rgba(0, 255, 65, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 15px;
+            overflow-x: hidden;
+            background-image: radial-gradient(rgba(0,255,65,0.1), transparent 60%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            border: 1px solid var(--border-color);
+            position: relative;
+            background: var(--scanline-bg);
+            box-shadow: 0 0 20px rgba(0,255,65,0.2), inset 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .container::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            animation: flicker-anim 0.01s infinite;
+        }
+        
+        @keyframes flicker-anim {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+        }
+
+        .status-panel {
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .status-panel::-webkit-scrollbar { width: 5px; }
+        .status-panel::-webkit-scrollbar-track { background: var(--dark-bg); }
+        .status-panel::-webkit-scrollbar-thumb { background: var(--matrix-green); }
+
+        .status-panel h2 {
+            color: var(--matrix-green);
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px var(--matrix-green);
+        }
+
+        .progress-section {
+            margin-bottom: 25px;
+        }
+        
+        .progress-section h3 {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        #main-progress-container {
+            width: 100%;
+            background-color: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            height: 25px;
+            padding: 3px;
+        }
+
+        #main-progress-bar {
+            background-color: var(--matrix-green);
+            width: 0%;
+            height: 100%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--matrix-green);
+        }
+
+        #main-progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--matrix-green);
+        }
+
+        .skill-matrix-container .skill-progress {
+            margin-bottom: 10px;
+        }
+        
+        .skill-matrix-container .skill-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .skill-matrix-container .skill-bar-bg {
+            height: 8px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            padding: 1px;
+        }
+        .skill-matrix-container .skill-bar {
+            background: var(--matrix-green);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .mission-log {
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .mission-log::-webkit-scrollbar { width: 8px; }
+        .mission-log::-webkit-scrollbar-track { background: var(--dark-bg); }
+        .mission-log::-webkit-scrollbar-thumb { background: var(--matrix-green); }
+
+        #glitch-header {
+            font-size: 1.8rem;
+            color: var(--matrix-green);
+            text-shadow: 0 0 8px var(--matrix-green);
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            animation: glitch 5s infinite;
+        }
+        
+        #glitch-header::before, #glitch-header::after {
+            content: 'OPERATION: PENETRATION_MASTERY';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--scanline-bg);
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+        }
+        #glitch-header::before { left: -2px; text-shadow: 2px 0 #ff00c1; animation: glitch-anim1 2s infinite linear alternate-reverse; }
+        #glitch-header::after { left: 2px; text-shadow: -2px 0 #00fff9; animation: glitch-anim2 3s infinite linear alternate-reverse; }
+
+        @keyframes glitch { 2%,64%{ transform: translate(2px,0) skew(0deg); } 4%,60%{ transform: translate(-2px,0) skew(0deg); } 62%{ transform: translate(0,0) skew(5deg); } }
+        @keyframes glitch-anim1 { 0%, 100% { clip: rect(42px, 9999px, 44px, 0); } 20% { clip: rect(12px, 9999px, 56px, 0); } }
+        @keyframes glitch-anim2 { 0%, 100% { clip: rect(2px, 9999px, 99px, 0); } 30% { clip: rect(78px, 9999px, 12px, 0); } }
+
+        .week-container { border: 1px solid var(--border-color); margin-bottom: 15px; }
+        .week-summary { background: var(--highlight-bg); padding: 10px 15px; cursor: pointer; font-size: 1.1rem; font-weight: bold; }
+        .week-summary::before { content: '[+] '; color: var(--matrix-green); }
+        .week-container[open] > .week-summary::before { content: '[-] '; }
+        
+        .day-list { padding: 0 15px 5px; }
+        .day { padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
+        .day:last-child { border-bottom: none; }
+        .day h4 { color: var(--text-color); margin-bottom: 10px; }
+        .day h4 span { color: #8b949e; }
+
+        .task { display: flex; align-items: center; margin-bottom: 8px; }
+        .task label { cursor: pointer; transition: color 0.3s; }
+        .task label::before { content: '[ ] '; color: var(--matrix-green); font-weight: bold; }
+        .task input[type="checkbox"] { display: none; }
+        .task input[type="checkbox"]:checked + label { color: #8b949e; text-decoration: line-through; }
+        .task input[type="checkbox"]:checked + label::before { content: '[X] '; }
+        
+        .tag { font-size: 0.8rem; padding: 0 5px; margin-left: 10px; border: 1px solid; }
+        .tag-python { border-color: #3572A5; color: #3572A5; }
+        .tag-linux { border-color: #a5d6ff; color: #a5d6ff;}
+        .tag-tools { border-color: #ffabab; color: #ffabab;}
+        .tag-web { border-color: #f1e05a; color: #f1e05a;}
+        .tag-ceh { border-color: #c8a2c8; color: #c8a2c8;}
+        .tag-project { border-color: #82aaff; color: #82aaff;}
+        .tag-practice { border-color: #82aaff; color: #82aaff;}
+        .tag-ad { border-color: #00A4EF; color: #00A4EF; }
+        .tag-windows { border-color: #00A4EF; color: #00A4EF; }
+        .tag-portfolio { border-color: #b08800; color: #b08800; }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .status-panel { border-right: none; border-bottom: 1px solid var(--border-color); max-height: none; }
+            .mission-log { max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="main-grid">
+            <aside class="status-panel">
+                <h2>SYSTEM STATUS</h2>
+                
+                <div class="progress-section">
+                    <h3>MISSION PROGRESS</h3>
+                    <div id="main-progress-container">
+                        <div id="main-progress-bar"></div>
+                    </div>
+                    <div id="main-progress-text">0.00%</div>
+                </div>
+                
+                <div class="progress-section">
+                    <h3>SKILL MATRIX</h3>
+                    <div id="skill-matrix-container" class="skill-matrix-container">
+                        <!-- Skill bars will be injected by JS -->
+                    </div>
+                </div>
+            </aside>
+            <main class="mission-log">
+                <h1 id="glitch-header">OPERATION: PENETRATION_MASTERY</h1>
+                <div id="roadmap-container">
+                    <!-- JS will inject mission data here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    // Data with added 'skill' property for detailed tracking
+    const roadmapData = [
+        { week: 1, title: 'Python & Linux Basics', days: [
+            { day: 1, date: 'Sept 24', tasks: [
+                { text: 'Python: Variables, Data Types, Input/Output', tag: 'Python', skill: 'Python' },
+                { text: 'Python: Setup a Virtual Environment (venv)', tag: 'Python', skill: 'Python' },
+                { text: 'Linux: Basic Navigation (pwd, ls, cd, mkdir)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Tools: Install Nmap & run a ping scan', tag: 'Tools', skill: 'Nmap' }
+            ]},
+            { day: 2, date: 'Sept 25', tasks: [
+                { text: 'Python: Loops, Conditional Statements', tag: 'Python', skill: 'Python' },
+                { text: 'Linux: File Operations (cat, touch, rm, nano/vim)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Practice: Python script to print numbers 1-100', tag: 'Practice', skill: 'Python' }
+            ]},
+            { day: 3, date: 'Sept 26', tasks: [
+                { text: 'Python: Functions (define and call)', tag: 'Python', skill: 'Python' },
+                { text: 'Python: Data Structures (Lists & Dictionaries)', tag: 'Python', skill: 'Python' },
+                { text: 'Linux: Text Processing (grep, head, tail)', tag: 'Linux', skill: 'Linux' }
+            ]},
+            { day: 4, date: 'Sept 27', tasks: [
+                { text: 'Python: File Handling (read/write .txt)', tag: 'Python', skill: 'Python' },
+                { text: 'Linux: Permissions (chmod, chown)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Practice: Give read/write permissions to a file', tag: 'Practice', skill: 'Linux' }
+            ]},
+            { day: 5, date: 'Sept 28', tasks: [
+                { text: 'Python: Modules (import os, sys)', tag: 'Python', skill: 'Python' },
+                { text: 'Python: Error Handling (try, except)', tag: 'Python', skill: 'Python' },
+                { text: 'Tools: Nmap service version scan (-sV)', tag: 'Tools', skill: 'Nmap' }
+            ]},
+            { day: 6, date: 'Sept 29', tasks: [
+                { text: 'Bash Scripting: Intro (echo, variables, comments)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Bash Scripting: if conditions and user input', tag: 'Linux', skill: 'Linux' },
+                { text: 'GitHub: Create an account and a new repository', tag: 'Tools', skill: 'GitHub' }
+            ]},
+            { day: 7, date: 'Sept 30', tasks: [
+                { text: 'Project: Build a simple Wordlist Generator in Python', tag: 'Project', skill: 'Python' },
+                { text: 'GitHub: Learn git add, commit, push', tag: 'Tools', skill: 'GitHub' }
+            ]}
+        ]},
+        { week: 2, title: 'Networking & Automation', days: [
+             { day: '1-2', date: 'Oct 1-2', tasks: [
+                { text: 'Python: requests library (GET/POST)', tag: 'Python', skill: 'Python' },
+                { text: 'Bash: Loops (for, while)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Practice: Bash script to create 10 directories', tag: 'Practice', skill: 'Linux' }
+            ]},
+             { day: '3-4', date: 'Oct 3-4', tasks: [
+                { text: 'Networking: Understand TCP/IP, Ports, Protocols', tag: 'Web', skill: 'Networking' },
+                { text: 'Linux: Networking commands (ifconfig/ip a, netstat)', tag: 'Linux', skill: 'Linux' },
+                { text: 'Tools: Wireshark installation and first packet capture', tag: 'Tools', skill: 'Wireshark' }
+            ]},
+             { day: '5-6', date: 'Oct 5-6', tasks: [
+                { text: 'Wireshark: Analyze HTTP and DNS traffic', tag: 'Tools', skill: 'Wireshark' },
+                { text: 'Python: Socket programming basics (client-server)', tag: 'Python', skill: 'Python' }
+            ]},
+             { day: 7, date: 'Oct 7', tasks: [
+                { text: 'Project: Create a Bash script to find live hosts', tag: 'Project', skill: 'Linux' },
+                { text: 'GitHub: Upload your new script', tag: 'Tools', skill: 'GitHub' }
+            ]}
+        ]},
+         { week: 3, title: 'First Real Attacks', days: [
+             { day: '1-2', date: 'Oct 8-9', tasks: [
+                { text: 'Tools: Install XAMPP and setup DVWA', tag: 'Tools', skill: 'Web Hacking' },
+                { text: 'Practice: Test DVWA login and explore', tag: 'Practice', skill: 'Web Hacking' }
+            ]},
+             { day: '3-4', date: 'Oct 10-11', tasks: [
+                { text: 'Web Hacking: Understand SQL Injection basics', tag: 'Web', skill: 'Web Hacking' },
+                { text: 'DVWA: Perform a basic SQLi attack', tag: 'Practice', skill: 'Web Hacking' }
+            ]},
+             { day: '5-6', date: 'Oct 12-13', tasks: [
+                { text: 'Web Hacking: Understand XSS basics', tag: 'Web', skill: 'Web Hacking' },
+                { text: 'DVWA: Perform a basic Reflected XSS attack', tag: 'Practice', skill: 'Web Hacking' }
+            ]},
+             { day: 7, date: 'Oct 15', tasks: [
+                { text: 'Project: Build a Port Scanner in Python', tag: 'Project', skill: 'Python' },
+                { text: 'GitHub: Upload your port scanner', tag: 'Tools', skill: 'GitHub' }
+            ]}
+        ]},
+        { week: 4, title: 'Burp Suite & Web Vulns', days: [
+            { day: '1-3', date: 'Oct 16-18', tasks: [
+                { text: 'Tools: Install and configure Burp Suite', tag: 'Tools', skill: 'Burp Suite' },
+                { text: 'Burp Suite: Learn Proxy, Repeater, and Intruder', tag: 'Tools', skill: 'Burp Suite' },
+                { text: 'DVWA: Intercept requests with Burp', tag: 'Practice', skill: 'Burp Suite' }
+            ]},
+            { day: '4-5', date: 'Oct 19-20', tasks: [
+                { text: 'Tools: Directory Brute-forcing with gobuster/dirb', tag: 'Tools', skill: 'Web Hacking' },
+                { text: 'Web Hacking: Command Injection in DVWA', tag: 'Web', skill: 'Web Hacking' }
+            ]},
+            { day: '6-7', date: 'Oct 21-22', tasks: [
+                { text: 'CEH Module 1: Intro to Ethical Hacking', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 2: Footprinting & Recon', tag: 'CEH', skill: 'CEH' }
+            ]}
+        ]},
+        { week: 5, title: 'Advanced Web Attacks', days: [
+            { day: '1-3', date: 'Oct 23-25', tasks: [
+                { text: 'Web Hacking: Stored XSS and CSRF in DVWA', tag: 'Web', skill: 'Web Hacking' },
+                { text: 'JavaScript: Learn basics for XSS payloads', tag: 'Web', skill: 'Web Hacking' },
+                { text: 'TryHackMe: Start "Web Fundamentals" path', tag: 'Practice', skill: 'Web Hacking' }
+            ]},
+            { day: '4-5', date: 'Oct 26-27', tasks: [
+                { text: 'Web Hacking: File Upload and LFI/RFI vulns', tag: 'Web', skill: 'Web Hacking' },
+                { text: 'CEH Module 3: Scanning Networks', tag: 'CEH', skill: 'CEH' }
+            ]},
+            { day: '6-7', date: 'Oct 28-29', tasks: [
+                { text: 'Project: Automate Directory Brute-forcing with Python', tag: 'Project', skill: 'Python' },
+                { text: 'GitHub: Upload your script', tag: 'Tools', skill: 'GitHub' }
+            ]}
+        ]},
+        { week: 6, title: 'System Hacking & CTFs', days: [
+            { day: '1-3', date: 'Oct 30 - Nov 1', tasks: [
+                { text: 'CEH Module 4: Enumeration', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 5: Vulnerability Analysis', tag: 'CEH', skill: 'CEH' }
+            ]},
+            { day: '4-7', date: 'Nov 2-5', tasks: [
+                { text: 'HackTheBox: Solve your first "Easy" machine', tag: 'Practice', skill: 'Reporting' },
+                { text: 'Project: Write a one-page Pentest Report', tag: 'Project', skill: 'Reporting' }
+            ]}
+        ]},
+        { week: 7, title: 'Malware & Social Engineering', days: [
+            { day: '1-3', date: 'Nov 6-8', tasks: [
+                { text: 'CEH Module 6: System Hacking', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 7: Malware Threats', tag: 'CEH', skill: 'CEH' }
+            ]},
+            { day: '4-7', date: 'Nov 9-12', tasks: [
+                { text: 'CEH Module 8: Sniffing', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 9: Social Engineering', tag: 'CEH', skill: 'CEH' },
+                { text: 'TryHackMe: Complete related labs', tag: 'Practice', skill: 'CEH' }
+            ]}
+        ]},
+        { week: 8, title: 'Active Directory Pentesting', days: [
+            { day: '1-2', date: 'Nov 13-14', tasks: [
+                { text: 'Theory: What is Active Directory?', tag: 'AD', skill: 'AD' },
+                { text: 'Setup: Create a small AD lab or use THM', tag: 'Practice', skill: 'AD' }
+            ]},
+            { day: '3-5', date: 'Nov 15-17', tasks: [
+                { text: 'Tools: Use BloodHound and PowerView', tag: 'Tools', skill: 'AD' }
+            ]},
+            { day: '6-7', date: 'Nov 18-19', tasks: [
+                { text: 'Attacks: Practice Kerberoasting & Pass-the-Hash', tag: 'AD', skill: 'AD' }
+            ]},
+            { day: '8-9', date: 'Nov 20-22', tasks: [
+                { text: 'Review all AD concepts', tag: 'AD', skill: 'AD' },
+                { text: 'TryHackMe: Complete "Attacktive Directory"', tag: 'Practice', skill: 'AD' }
+            ]}
+        ]},
+        { week: 9, title: 'Metasploit & Privilege Escalation', days: [
+            { day: '1-3', date: 'Nov 23-25', tasks: [
+                { text: 'Tools: Intro to Metasploit Framework', tag: 'Tools', skill: 'Metasploit' },
+                { text: 'Practice: Exploit Metasploitable 2', tag: 'Practice', skill: 'Metasploit' }
+            ]},
+            { day: '4-7', date: 'Nov 26-29', tasks: [
+                { text: 'Linux PrivEsc: Learn common techniques', tag: 'Linux', skill: 'PrivEsc' },
+                { text: 'TryHackMe: Complete "Linux PrivEsc" room', tag: 'Practice', skill: 'PrivEsc' }
+            ]}
+        ]},
+        { week: 10, title: 'Advanced CEH Topics', days: [
+            { day: '1-3', date: 'Nov 30 - Dec 2', tasks: [
+                { text: 'CEH Module 10: Denial-of-Service', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 11: Session Hijacking', tag: 'CEH', skill: 'CEH' }
+            ]},
+            { day: '4-7', date: 'Dec 3-6', tasks: [
+                { text: 'CEH Module 12: Evading IDS, Firewalls', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 13: Hacking Web Servers', tag: 'CEH', skill: 'CEH' }
+            ]}
+        ]},
+        { week: 11, title: 'Windows & Reporting', days: [
+            { day: '1-4', date: 'Dec 7-10', tasks: [
+                { text: 'Windows PrivEsc: Learn common techniques', tag: 'Windows', skill: 'PrivEsc' },
+                { text: 'TryHackMe: Complete "Windows PrivEsc" room', tag: 'Practice', skill: 'PrivEsc' }
+            ]},
+            { day: '5-8', date: 'Dec 11-15', tasks: [
+                { text: 'HackTheBox: Solve a "Medium" machine', tag: 'Practice', skill: 'Reporting' },
+                { text: 'Project: Write a detailed Pentest Report', tag: 'Project', skill: 'Reporting' },
+                { text: 'GitHub: Upload reports to a new repo', tag: 'Tools', skill: 'GitHub' }
+            ]}
+        ]},
+        { week: 12, title: 'Finishing CEH', days: [
+            { day: '1-7', date: 'Dec 16-22', tasks: [
+                { text: 'CEH Module 14: Hacking Web Applications', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 15: SQL Injection', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 16: Hacking Wireless Networks', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 17: Hacking Mobile Platforms', tag: 'CEH', skill: 'CEH' }
+            ]}
+        ]},
+        { week: 13, title: 'Final Topics & Mock Exams', days: [
+            { day: '1-5', date: 'Dec 23-27', tasks: [
+                { text: 'CEH Module 18: IoT and OT Hacking', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 19: Cloud Computing', tag: 'CEH', skill: 'CEH' },
+                { text: 'CEH Module 20: Cryptography', tag: 'CEH', skill: 'CEH' },
+                { text: 'Practice: Take first full-length CEH mock exam', tag: 'Practice', skill: 'CEH' }
+            ]}
+        ]},
+        { week: 14, title: 'Revision & Portfolio Polish', days: [
+            { day: 1, date: 'Dec 28', tasks: [
+                { text: 'Review notes and weak areas from mock exam', tag: 'Practice', skill: 'CEH' },
+                { text: 'Revisit difficult labs on THM/HTB', tag: 'Practice', skill: 'Networking' }
+            ]},
+            { day: 2, date: 'Dec 29', tasks: [
+                { text: 'GitHub Polish: Update all README.md files', tag: 'Portfolio', skill: 'GitHub' },
+                { text: 'Make sure your profile is professional', tag: 'Portfolio', skill: 'Portfolio' }
+            ]},
+            { day: 3, date: 'Dec 30', tasks: [
+                { text: 'LinkedIn Update: Add new skills, tools, projects', tag: 'Portfolio', skill: 'Portfolio' },
+                { text: 'Write a summary of your journey', tag: 'Portfolio', skill: 'Portfolio' }
+            ]},
+            { day: 4, date: 'Dec 31', tasks: [
+                { text: 'Take a final CEH mock exam', tag: 'Practice', skill: 'CEH' },
+                { text: 'Review journey and plan goals for 2026', tag: 'Portfolio', skill: 'Portfolio' }
+            ]}
+        ]}
+    ];
+
+    const roadmapContainer = document.getElementById('roadmap-container');
+    const skillMatrixContainer = document.getElementById('skill-matrix-container');
+    let taskIdCounter = 0;
+    const skillsToTrack = {};
+
+    // 1. Initialize skills and render the skill matrix structure
+    function initializeSkills() {
+        roadmapData.forEach(week => {
+            week.days.forEach(day => {
+                day.tasks.forEach(task => {
+                    if (task.skill && !skillsToTrack[task.skill]) {
+                        skillsToTrack[task.skill] = { total: 0, completed: 0 };
+                    }
+                });
+            });
+        });
+
+        let skillMatrixHTML = '';
+        for (const skill in skillsToTrack) {
+            skillMatrixHTML += `
+                <div class="skill-progress">
+                    <div class="skill-label">
+                        <span>${skill}</span>
+                        <span id="skill-perc-${skill}">0%</span>
+                    </div>
+                    <div class="skill-bar-bg">
+                        <div class="skill-bar" id="skill-bar-${skill}"></div>
+                    </div>
+                </div>
+            `;
+        }
+        skillMatrixContainer.innerHTML = skillMatrixHTML;
+    }
+
+
+    // 2. Render the main roadmap checklist
+    function renderRoadmap() {
+        let roadmapHTML = '';
+        roadmapData.forEach(weekData => {
+            roadmapHTML += `
+                <details class="week-container" ${weekData.week === 1 ? 'open' : ''}>
+                    <summary class="week-summary">Week ${weekData.week}: ${weekData.title}</summary>
+                    <div class="day-list">
+            `;
+            weekData.days.forEach(dayData => {
+                roadmapHTML += `<div class="day"><h4>&gt; Day ${dayData.day} <span>// ${dayData.date}</span></h4>`;
+                dayData.tasks.forEach(task => {
+                    const currentTaskId = `task-${taskIdCounter++}`;
+                    const tagClass = `tag-${task.tag.toLowerCase().split(' ')[0]}`;
+                    roadmapHTML += `
+                        <div class="task">
+                            <input type="checkbox" id="${currentTaskId}" class="task-checkbox" data-skill="${task.skill || 'general'}">
+                            <label for="${currentTaskId}">${task.text} <span class="tag ${tagClass}">${task.tag}</span></label>
+                        </div>
+                    `;
+                });
+                roadmapHTML += `</div>`;
+            });
+            roadmapHTML += `</div></details>`;
+        });
+        roadmapContainer.innerHTML = roadmapHTML;
+    }
+
+    // 3. Update all progress bars (main and skills)
+    function updateAllProgress() {
+        const checkboxes = document.querySelectorAll('.task-checkbox');
+        const totalTasks = checkboxes.length;
+        const completedTasks = document.querySelectorAll('.task-checkbox:checked').length;
+        
+        // Update main progress
+        const overallPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        document.getElementById('main-progress-bar').style.width = `${overallPercentage}%`;
+        document.getElementById('main-progress-text').textContent = `${overallPercentage.toFixed(2)}%`;
+
+        // Reset skill counts
+        for (const skill in skillsToTrack) {
+            skillsToTrack[skill].total = 0;
+            skillsToTrack[skill].completed = 0;
+        }
+
+        // Recalculate skill counts
+        checkboxes.forEach(cb => {
+            const skill = cb.dataset.skill;
+            if (skillsToTrack[skill]) {
+                skillsToTrack[skill].total++;
+                if (cb.checked) {
+                    skillsToTrack[skill].completed++;
+                }
+            }
+        });
+
+        // Update skill matrix UI
+        for (const skill in skillsToTrack) {
+            const data = skillsToTrack[skill];
+            const skillPercentage = data.total > 0 ? (data.completed / data.total) * 100 : 0;
+            document.getElementById(`skill-bar-${skill}`).style.width = `${skillPercentage}%`;
+            document.getElementById(`skill-perc-${skill}`).textContent = `${Math.round(skillPercentage)}%`;
+        }
+        
+        saveProgress();
+    }
+    
+    // 4. Save and Load progress from localStorage
+    function saveProgress() {
+        const progress = [];
+        document.querySelectorAll('.task-checkbox').forEach(cb => {
+            progress.push(cb.checked);
+        });
+        localStorage.setItem('hackerTrackerProgressV2', JSON.stringify(progress));
+    }
+
+    function loadProgress() {
+        const savedProgress = JSON.parse(localStorage.getItem('hackerTrackerProgressV2'));
+        if (savedProgress) {
+            document.querySelectorAll('.task-checkbox').forEach((cb, index) => {
+                if (savedProgress[index]) {
+                    cb.checked = true;
+                }
+            });
+        }
+    }
+
+    // --- Initial Execution ---
+    initializeSkills();
+    renderRoadmap();
+    loadProgress();
+    updateAllProgress();
+
+    roadmapContainer.addEventListener('change', (e) => {
+        if (e.target.classList.contains('task-checkbox')) {
+            updateAllProgress();
+        }
+    });
+
+    </script>
+</body>
+</html>
+
