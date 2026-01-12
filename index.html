@@ -3,600 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>//: GHOST_PROTOCOL_INITIATED</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <title>C Protocol Tracker</title>
+    
+    <!-- 1. TAILWIND CSS (With Preflight Disabled for Blogger) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                preflight: false, // IMP: Disables global reset so it doesn't break your Blogger theme
+            }
+        }
+    </script>
+
+    <!-- 2. REACT & BABEL -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 3. CUSTOM STYLES (Scoped to tracker only) -->
     <style>
-        :root {
-            --matrix-green: #00ff41;
-            --scanline-bg: #0a0c0a;
-            --text-color: #c9d1d9;
-            --dark-bg: #0d1117;
-            --border-color: rgba(0, 255, 65, 0.2);
-            --highlight-bg: rgba(0, 255, 65, 0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Fira Code', monospace;
-            background-color: var(--dark-bg);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 15px;
-            overflow-x: hidden;
-            background-image: radial-gradient(rgba(0,255,65,0.1), transparent 60%);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            border: 1px solid var(--border-color);
-            position: relative;
-            background: var(--scanline-bg);
-            box-shadow: 0 0 20px rgba(0,255,65,0.2), inset 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        .container::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            animation: flicker-anim 0.01s infinite;
+        /* Only style the root container, not the body, to be safe for Blogger */
+        #root {
+            background-color: #0a0a0a;
+            color: #4ade80;
+            font-family: monospace;
+            min-height: 100vh; /* Or use min-h-[600px] if embedding in a small area */
+            border-radius: 8px; /* Nice rounded corners for blog post */
+            padding: 1rem;
         }
         
-        @keyframes flicker-anim {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 0;
-        }
-
-        .status-panel {
-            padding: 20px;
-            border-right: 1px solid var(--border-color);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+        /* Custom scrollbar for cyber feel (Scoped) */
+        #root ::-webkit-scrollbar { width: 8px; }
+        #root ::-webkit-scrollbar-track { background: #0a0a0a; }
+        #root ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
+        #root ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
         
-        .status-panel::-webkit-scrollbar { width: 5px; }
-        .status-panel::-webkit-scrollbar-track { background: var(--dark-bg); }
-        .status-panel::-webkit-scrollbar-thumb { background: var(--matrix-green); }
-
-        .status-panel h2 {
-            color: var(--matrix-green);
-            font-size: 1.2rem;
-            text-align: center;
-            margin-bottom: 20px;
-            text-shadow: 0 0 5px var(--matrix-green);
-        }
-
-        .progress-section {
-            margin-bottom: 25px;
-        }
-        
-        .progress-section h3 {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-        
-        #main-progress-container {
-            width: 100%;
-            background-color: var(--dark-bg);
-            border: 1px solid var(--border-color);
-            height: 25px;
-            padding: 3px;
-        }
-
-        #main-progress-bar {
-            background-color: var(--matrix-green);
-            width: 0%;
-            height: 100%;
-            transition: width 0.5s ease;
-            box-shadow: 0 0 10px var(--matrix-green);
-        }
-
-        #main-progress-text {
-            text-align: center;
-            margin-top: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: var(--matrix-green);
-        }
-
-        .skill-matrix-container .skill-progress {
-            margin-bottom: 10px;
-        }
-        
-        .skill-matrix-container .skill-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            margin-bottom: 4px;
-        }
-
-        .skill-matrix-container .skill-bar-bg {
-            height: 8px;
-            background: var(--dark-bg);
-            border: 1px solid var(--border-color);
-            padding: 1px;
-        }
-        .skill-matrix-container .skill-bar {
-            background: var(--matrix-green);
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        .mission-log {
-            padding: 20px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .mission-log::-webkit-scrollbar { width: 8px; }
-        .mission-log::-webkit-scrollbar-track { background: var(--dark-bg); }
-        .mission-log::-webkit-scrollbar-thumb { background: var(--matrix-green); }
-
-        #glitch-header {
-            font-size: 1.8rem;
-            color: var(--matrix-green);
-            text-shadow: 0 0 8px var(--matrix-green);
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-            animation: glitch 5s infinite;
-        }
-        
-        #glitch-header::before, #glitch-header::after {
-            content: 'OPERATION: PENETRATION_MASTERY';
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: var(--scanline-bg);
-            overflow: hidden;
-            clip: rect(0, 900px, 0, 0);
-        }
-        #glitch-header::before { left: -2px; text-shadow: 2px 0 #ff00c1; animation: glitch-anim1 2s infinite linear alternate-reverse; }
-        #glitch-header::after { left: 2px; text-shadow: -2px 0 #00fff9; animation: glitch-anim2 3s infinite linear alternate-reverse; }
-
-        @keyframes glitch { 2%,64%{ transform: translate(2px,0) skew(0deg); } 4%,60%{ transform: translate(-2px,0) skew(0deg); } 62%{ transform: translate(0,0) skew(5deg); } }
-        @keyframes glitch-anim1 { 0%, 100% { clip: rect(42px, 9999px, 44px, 0); } 20% { clip: rect(12px, 9999px, 56px, 0); } }
-        @keyframes glitch-anim2 { 0%, 100% { clip: rect(2px, 9999px, 99px, 0); } 30% { clip: rect(78px, 9999px, 12px, 0); } }
-
-        .week-container { border: 1px solid var(--border-color); margin-bottom: 15px; }
-        .week-summary { background: var(--highlight-bg); padding: 10px 15px; cursor: pointer; font-size: 1.1rem; font-weight: bold; }
-        .week-summary::before { content: '[+] '; color: var(--matrix-green); }
-        .week-container[open] > .week-summary::before { content: '[-] '; }
-        
-        .day-list { padding: 0 15px 5px; }
-        .day { padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
-        .day:last-child { border-bottom: none; }
-        .day h4 { color: var(--text-color); margin-bottom: 10px; }
-        .day h4 span { color: #8b949e; }
-
-        .task { display: flex; align-items: center; margin-bottom: 8px; }
-        .task label { cursor: pointer; transition: color 0.3s; }
-        .task label::before { content: '[ ] '; color: var(--matrix-green); font-weight: bold; }
-        .task input[type="checkbox"] { display: none; }
-        .task input[type="checkbox"]:checked + label { color: #8b949e; text-decoration: line-through; }
-        .task input[type="checkbox"]:checked + label::before { content: '[X] '; }
-        
-        .tag { font-size: 0.8rem; padding: 0 5px; margin-left: 10px; border: 1px solid; }
-        .tag-python { border-color: #3572A5; color: #3572A5; }
-        .tag-linux { border-color: #a5d6ff; color: #a5d6ff;}
-        .tag-tools { border-color: #ffabab; color: #ffabab;}
-        .tag-web { border-color: #f1e05a; color: #f1e05a;}
-        .tag-ceh { border-color: #c8a2c8; color: #c8a2c8;}
-        .tag-project { border-color: #82aaff; color: #82aaff;}
-        .tag-practice { border-color: #82aaff; color: #82aaff;}
-        .tag-ad { border-color: #00A4EF; color: #00A4EF; }
-        .tag-windows { border-color: #00A4EF; color: #00A4EF; }
-        .tag-portfolio { border-color: #b08800; color: #b08800; }
-
-        @media (max-width: 900px) {
-            .main-grid { grid-template-columns: 1fr; }
-            .status-panel { border-right: none; border-bottom: 1px solid var(--border-color); max-height: none; }
-            .mission-log { max-height: none; }
-        }
+        /* Ensure cursor pointer works on labels */
+        label { cursor: pointer; }
     </style>
 </head>
-<body>
+<body style="margin: 0; background-color: #222;"> <!-- Background only for standalone preview -->
 
-    <div class="container">
-        <div class="main-grid">
-            <aside class="status-panel">
-                <h2>SYSTEM STATUS</h2>
-                
-                <div class="progress-section">
-                    <h3>MISSION PROGRESS</h3>
-                    <div id="main-progress-container">
-                        <div id="main-progress-bar"></div>
-                    </div>
-                    <div id="main-progress-text">0.00%</div>
-                </div>
-                
-                <div class="progress-section">
-                    <h3>SKILL MATRIX</h3>
-                    <div id="skill-matrix-container" class="skill-matrix-container">
-                        <!-- Skill bars will be injected by JS -->
-                    </div>
-                </div>
-            </aside>
-            <main class="mission-log">
-                <h1 id="glitch-header">OPERATION: PENETRATION_MASTERY</h1>
-                <div id="roadmap-container">
-                    <!-- JS will inject mission data here -->
-                </div>
-            </main>
-        </div>
-    </div>
+    <!-- 4. APP CONTAINER -->
+    <div id="root"></div>
 
-    <script>
-    // Data with added 'skill' property for detailed tracking
-    const roadmapData = [
-        { week: 1, title: 'Python & Linux Basics', days: [
-            { day: 1, date: 'Sept 24', tasks: [
-                { text: 'Python: Variables, Data Types, Input/Output', tag: 'Python', skill: 'Python' },
-                { text: 'Python: Setup a Virtual Environment (venv)', tag: 'Python', skill: 'Python' },
-                { text: 'Linux: Basic Navigation (pwd, ls, cd, mkdir)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Tools: Install Nmap & run a ping scan', tag: 'Tools', skill: 'Nmap' }
-            ]},
-            { day: 2, date: 'Sept 25', tasks: [
-                { text: 'Python: Loops, Conditional Statements', tag: 'Python', skill: 'Python' },
-                { text: 'Linux: File Operations (cat, touch, rm, nano/vim)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Practice: Python script to print numbers 1-100', tag: 'Practice', skill: 'Python' }
-            ]},
-            { day: 3, date: 'Sept 26', tasks: [
-                { text: 'Python: Functions (define and call)', tag: 'Python', skill: 'Python' },
-                { text: 'Python: Data Structures (Lists & Dictionaries)', tag: 'Python', skill: 'Python' },
-                { text: 'Linux: Text Processing (grep, head, tail)', tag: 'Linux', skill: 'Linux' }
-            ]},
-            { day: 4, date: 'Sept 27', tasks: [
-                { text: 'Python: File Handling (read/write .txt)', tag: 'Python', skill: 'Python' },
-                { text: 'Linux: Permissions (chmod, chown)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Practice: Give read/write permissions to a file', tag: 'Practice', skill: 'Linux' }
-            ]},
-            { day: 5, date: 'Sept 28', tasks: [
-                { text: 'Python: Modules (import os, sys)', tag: 'Python', skill: 'Python' },
-                { text: 'Python: Error Handling (try, except)', tag: 'Python', skill: 'Python' },
-                { text: 'Tools: Nmap service version scan (-sV)', tag: 'Tools', skill: 'Nmap' }
-            ]},
-            { day: 6, date: 'Sept 29', tasks: [
-                { text: 'Bash Scripting: Intro (echo, variables, comments)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Bash Scripting: if conditions and user input', tag: 'Linux', skill: 'Linux' },
-                { text: 'GitHub: Create an account and a new repository', tag: 'Tools', skill: 'GitHub' }
-            ]},
-            { day: 7, date: 'Sept 30', tasks: [
-                { text: 'Project: Build a simple Wordlist Generator in Python', tag: 'Project', skill: 'Python' },
-                { text: 'GitHub: Learn git add, commit, push', tag: 'Tools', skill: 'GitHub' }
-            ]}
-        ]},
-        { week: 2, title: 'Networking & Automation', days: [
-             { day: '1-2', date: 'Oct 1-2', tasks: [
-                { text: 'Python: requests library (GET/POST)', tag: 'Python', skill: 'Python' },
-                { text: 'Bash: Loops (for, while)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Practice: Bash script to create 10 directories', tag: 'Practice', skill: 'Linux' }
-            ]},
-             { day: '3-4', date: 'Oct 3-4', tasks: [
-                { text: 'Networking: Understand TCP/IP, Ports, Protocols', tag: 'Web', skill: 'Networking' },
-                { text: 'Linux: Networking commands (ifconfig/ip a, netstat)', tag: 'Linux', skill: 'Linux' },
-                { text: 'Tools: Wireshark installation and first packet capture', tag: 'Tools', skill: 'Wireshark' }
-            ]},
-             { day: '5-6', date: 'Oct 5-6', tasks: [
-                { text: 'Wireshark: Analyze HTTP and DNS traffic', tag: 'Tools', skill: 'Wireshark' },
-                { text: 'Python: Socket programming basics (client-server)', tag: 'Python', skill: 'Python' }
-            ]},
-             { day: 7, date: 'Oct 7', tasks: [
-                { text: 'Project: Create a Bash script to find live hosts', tag: 'Project', skill: 'Linux' },
-                { text: 'GitHub: Upload your new script', tag: 'Tools', skill: 'GitHub' }
-            ]}
-        ]},
-         { week: 3, title: 'First Real Attacks', days: [
-             { day: '1-2', date: 'Oct 8-9', tasks: [
-                { text: 'Tools: Install XAMPP and setup DVWA', tag: 'Tools', skill: 'Web Hacking' },
-                { text: 'Practice: Test DVWA login and explore', tag: 'Practice', skill: 'Web Hacking' }
-            ]},
-             { day: '3-4', date: 'Oct 10-11', tasks: [
-                { text: 'Web Hacking: Understand SQL Injection basics', tag: 'Web', skill: 'Web Hacking' },
-                { text: 'DVWA: Perform a basic SQLi attack', tag: 'Practice', skill: 'Web Hacking' }
-            ]},
-             { day: '5-6', date: 'Oct 12-13', tasks: [
-                { text: 'Web Hacking: Understand XSS basics', tag: 'Web', skill: 'Web Hacking' },
-                { text: 'DVWA: Perform a basic Reflected XSS attack', tag: 'Practice', skill: 'Web Hacking' }
-            ]},
-             { day: 7, date: 'Oct 15', tasks: [
-                { text: 'Project: Build a Port Scanner in Python', tag: 'Project', skill: 'Python' },
-                { text: 'GitHub: Upload your port scanner', tag: 'Tools', skill: 'GitHub' }
-            ]}
-        ]},
-        { week: 4, title: 'Burp Suite & Web Vulns', days: [
-            { day: '1-3', date: 'Oct 16-18', tasks: [
-                { text: 'Tools: Install and configure Burp Suite', tag: 'Tools', skill: 'Burp Suite' },
-                { text: 'Burp Suite: Learn Proxy, Repeater, and Intruder', tag: 'Tools', skill: 'Burp Suite' },
-                { text: 'DVWA: Intercept requests with Burp', tag: 'Practice', skill: 'Burp Suite' }
-            ]},
-            { day: '4-5', date: 'Oct 19-20', tasks: [
-                { text: 'Tools: Directory Brute-forcing with gobuster/dirb', tag: 'Tools', skill: 'Web Hacking' },
-                { text: 'Web Hacking: Command Injection in DVWA', tag: 'Web', skill: 'Web Hacking' }
-            ]},
-            { day: '6-7', date: 'Oct 21-22', tasks: [
-                { text: 'CEH Module 1: Intro to Ethical Hacking', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 2: Footprinting & Recon', tag: 'CEH', skill: 'CEH' }
-            ]}
-        ]},
-        { week: 5, title: 'Advanced Web Attacks', days: [
-            { day: '1-3', date: 'Oct 23-25', tasks: [
-                { text: 'Web Hacking: Stored XSS and CSRF in DVWA', tag: 'Web', skill: 'Web Hacking' },
-                { text: 'JavaScript: Learn basics for XSS payloads', tag: 'Web', skill: 'Web Hacking' },
-                { text: 'TryHackMe: Start "Web Fundamentals" path', tag: 'Practice', skill: 'Web Hacking' }
-            ]},
-            { day: '4-5', date: 'Oct 26-27', tasks: [
-                { text: 'Web Hacking: File Upload and LFI/RFI vulns', tag: 'Web', skill: 'Web Hacking' },
-                { text: 'CEH Module 3: Scanning Networks', tag: 'CEH', skill: 'CEH' }
-            ]},
-            { day: '6-7', date: 'Oct 28-29', tasks: [
-                { text: 'Project: Automate Directory Brute-forcing with Python', tag: 'Project', skill: 'Python' },
-                { text: 'GitHub: Upload your script', tag: 'Tools', skill: 'GitHub' }
-            ]}
-        ]},
-        { week: 6, title: 'System Hacking & CTFs', days: [
-            { day: '1-3', date: 'Oct 30 - Nov 1', tasks: [
-                { text: 'CEH Module 4: Enumeration', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 5: Vulnerability Analysis', tag: 'CEH', skill: 'CEH' }
-            ]},
-            { day: '4-7', date: 'Nov 2-5', tasks: [
-                { text: 'HackTheBox: Solve your first "Easy" machine', tag: 'Practice', skill: 'Reporting' },
-                { text: 'Project: Write a one-page Pentest Report', tag: 'Project', skill: 'Reporting' }
-            ]}
-        ]},
-        { week: 7, title: 'Malware & Social Engineering', days: [
-            { day: '1-3', date: 'Nov 6-8', tasks: [
-                { text: 'CEH Module 6: System Hacking', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 7: Malware Threats', tag: 'CEH', skill: 'CEH' }
-            ]},
-            { day: '4-7', date: 'Nov 9-12', tasks: [
-                { text: 'CEH Module 8: Sniffing', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 9: Social Engineering', tag: 'CEH', skill: 'CEH' },
-                { text: 'TryHackMe: Complete related labs', tag: 'Practice', skill: 'CEH' }
-            ]}
-        ]},
-        { week: 8, title: 'Active Directory Pentesting', days: [
-            { day: '1-2', date: 'Nov 13-14', tasks: [
-                { text: 'Theory: What is Active Directory?', tag: 'AD', skill: 'AD' },
-                { text: 'Setup: Create a small AD lab or use THM', tag: 'Practice', skill: 'AD' }
-            ]},
-            { day: '3-5', date: 'Nov 15-17', tasks: [
-                { text: 'Tools: Use BloodHound and PowerView', tag: 'Tools', skill: 'AD' }
-            ]},
-            { day: '6-7', date: 'Nov 18-19', tasks: [
-                { text: 'Attacks: Practice Kerberoasting & Pass-the-Hash', tag: 'AD', skill: 'AD' }
-            ]},
-            { day: '8-9', date: 'Nov 20-22', tasks: [
-                { text: 'Review all AD concepts', tag: 'AD', skill: 'AD' },
-                { text: 'TryHackMe: Complete "Attacktive Directory"', tag: 'Practice', skill: 'AD' }
-            ]}
-        ]},
-        { week: 9, title: 'Metasploit & Privilege Escalation', days: [
-            { day: '1-3', date: 'Nov 23-25', tasks: [
-                { text: 'Tools: Intro to Metasploit Framework', tag: 'Tools', skill: 'Metasploit' },
-                { text: 'Practice: Exploit Metasploitable 2', tag: 'Practice', skill: 'Metasploit' }
-            ]},
-            { day: '4-7', date: 'Nov 26-29', tasks: [
-                { text: 'Linux PrivEsc: Learn common techniques', tag: 'Linux', skill: 'PrivEsc' },
-                { text: 'TryHackMe: Complete "Linux PrivEsc" room', tag: 'Practice', skill: 'PrivEsc' }
-            ]}
-        ]},
-        { week: 10, title: 'Advanced CEH Topics', days: [
-            { day: '1-3', date: 'Nov 30 - Dec 2', tasks: [
-                { text: 'CEH Module 10: Denial-of-Service', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 11: Session Hijacking', tag: 'CEH', skill: 'CEH' }
-            ]},
-            { day: '4-7', date: 'Dec 3-6', tasks: [
-                { text: 'CEH Module 12: Evading IDS, Firewalls', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 13: Hacking Web Servers', tag: 'CEH', skill: 'CEH' }
-            ]}
-        ]},
-        { week: 11, title: 'Windows & Reporting', days: [
-            { day: '1-4', date: 'Dec 7-10', tasks: [
-                { text: 'Windows PrivEsc: Learn common techniques', tag: 'Windows', skill: 'PrivEsc' },
-                { text: 'TryHackMe: Complete "Windows PrivEsc" room', tag: 'Practice', skill: 'PrivEsc' }
-            ]},
-            { day: '5-8', date: 'Dec 11-15', tasks: [
-                { text: 'HackTheBox: Solve a "Medium" machine', tag: 'Practice', skill: 'Reporting' },
-                { text: 'Project: Write a detailed Pentest Report', tag: 'Project', skill: 'Reporting' },
-                { text: 'GitHub: Upload reports to a new repo', tag: 'Tools', skill: 'GitHub' }
-            ]}
-        ]},
-        { week: 12, title: 'Finishing CEH', days: [
-            { day: '1-7', date: 'Dec 16-22', tasks: [
-                { text: 'CEH Module 14: Hacking Web Applications', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 15: SQL Injection', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 16: Hacking Wireless Networks', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 17: Hacking Mobile Platforms', tag: 'CEH', skill: 'CEH' }
-            ]}
-        ]},
-        { week: 13, title: 'Final Topics & Mock Exams', days: [
-            { day: '1-5', date: 'Dec 23-27', tasks: [
-                { text: 'CEH Module 18: IoT and OT Hacking', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 19: Cloud Computing', tag: 'CEH', skill: 'CEH' },
-                { text: 'CEH Module 20: Cryptography', tag: 'CEH', skill: 'CEH' },
-                { text: 'Practice: Take first full-length CEH mock exam', tag: 'Practice', skill: 'CEH' }
-            ]}
-        ]},
-        { week: 14, title: 'Revision & Portfolio Polish', days: [
-            { day: 1, date: 'Dec 28', tasks: [
-                { text: 'Review notes and weak areas from mock exam', tag: 'Practice', skill: 'CEH' },
-                { text: 'Revisit difficult labs on THM/HTB', tag: 'Practice', skill: 'Networking' }
-            ]},
-            { day: 2, date: 'Dec 29', tasks: [
-                { text: 'GitHub Polish: Update all README.md files', tag: 'Portfolio', skill: 'GitHub' },
-                { text: 'Make sure your profile is professional', tag: 'Portfolio', skill: 'Portfolio' }
-            ]},
-            { day: 3, date: 'Dec 30', tasks: [
-                { text: 'LinkedIn Update: Add new skills, tools, projects', tag: 'Portfolio', skill: 'Portfolio' },
-                { text: 'Write a summary of your journey', tag: 'Portfolio', skill: 'Portfolio' }
-            ]},
-            { day: 4, date: 'Dec 31', tasks: [
-                { text: 'Take a final CEH mock exam', tag: 'Practice', skill: 'CEH' },
-                { text: 'Review journey and plan goals for 2026', tag: 'Portfolio', skill: 'Portfolio' }
-            ]}
-        ]}
-    ];
+    <!-- 5. REACT LOGIC -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    const roadmapContainer = document.getElementById('roadmap-container');
-    const skillMatrixContainer = document.getElementById('skill-matrix-container');
-    let taskIdCounter = 0;
-    const skillsToTrack = {};
+        // --- ICONS (Embedded SVGs to avoid dependencies) ---
+        const Icon = ({ name, className }) => {
+            const icons = {
+                terminal: <path d="m4 17 6-6-6-6M12 19h8"/>,
+                cpu: <path d="M13.5 2H19v5.5M5.5 2H2v5.5M2 18.5V22h5.5M18.5 22H22v-3.5M9 9h6v6H9z" strokeLinejoin="round"/>,
+                brain: <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>,
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+                save: <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8V3"/>,
+                trash: <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>,
+                skull: <g><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></g>,
+                chevronDown: <path d="m6 9 6 6 6-6"/>,
+                chevronUp: <path d="m18 15-6-6-6 6"/>,
+                video: <g><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></g>,
+                link: <g><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></g>,
+                book: <g><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>,
+                check: <polyline points="20 6 9 17 4 12"/>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || <circle cx="12" cy="12" r="10"/>}
+                </svg>
+            );
+        };
 
-    // 1. Initialize skills and render the skill matrix structure
-    function initializeSkills() {
-        roadmapData.forEach(week => {
-            week.days.forEach(day => {
-                day.tasks.forEach(task => {
-                    if (task.skill && !skillsToTrack[task.skill]) {
-                        skillsToTrack[task.skill] = { total: 0, completed: 0 };
-                    }
+        // --- MAIN APP ---
+        const CyberTracker = () => {
+            const [progress, setProgress] = useState({});
+            const [expandedModules, setExpandedModules] = useState({ 1: true });
+
+            // CURRICULUM DATA
+            const curriculum = [
+                {
+                    id: 1,
+                    title: "Days 1-3: The Foundation",
+                    duration: "3 Days",
+                    icon: "terminal",
+                    focus: "Basics, Loops, Functions",
+                    items: [
+                        { id: 'd1_learn', text: "Day 1 Learn: Compiler, int, char, float, printf, scanf", tag: "Day 1" },
+                        { id: 'd1_code', text: "Day 1 Code: Hello World, Sum of 2 nums, Print ASCII", tag: "Practice" },
+                        { id: 'd2_learn', text: "Day 2 Learn: if/else, switch, for/while loops", tag: "Day 2" },
+                        { id: 'd2_code', text: "Day 2 Code: Even/Odd, Largest of 3, Loop 1-100", tag: "Practice" },
+                        { id: 'd3_learn', text: "Day 3 Learn: Functions & Call by Value", tag: "Day 3" },
+                        { id: 'd3_code', text: "Day 3 Code: Add function, Prime number checker", tag: "Practice" }
+                    ],
+                    resources: [
+                        { title: "CS50 Lecture 1 (C Part)", url: "https://www.youtube.com/results?search_query=cs50+week+1+c", type: "Video", note: "Watch only the C syntax part." },
+                        { title: "Neso Academy: C Intro", url: "https://www.youtube.com/results?search_query=neso+academy+c+introduction", type: "Video", note: "Great for understanding flow." }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Days 4-5: Arrays & Strings",
+                    duration: "2 Days",
+                    icon: "cpu",
+                    focus: "Buffer Overflows Starts Here",
+                    items: [
+                        { id: 'd4_learn', text: "Day 4 Learn: 1D Arrays & Memory Layout", tag: "Day 4" },
+                        { id: 'd4_code', text: "Day 4 Code: Find max in array, Reverse array", tag: "Practice" },
+                        { id: 'd5_learn', text: "Day 5 Learn: Strings (char[]), \\0, strlen/strcpy", tag: "Day 5" },
+                        { id: 'd5_code', text: "Day 5 Code: Manual string length (no strlen)", tag: "Logic" },
+                        { id: 'd5_sec', text: "Day 5 Security: Demo Buffer Overflow (Crash it)", tag: "Exploit" }
+                    ],
+                    resources: [
+                        { title: "Neso Academy: Arrays", url: "https://www.youtube.com/results?search_query=neso+academy+arrays+in+c", type: "Video", note: "Visualize how strings are just arrays." },
+                        { title: "Computerphile: Buffer Overflow", url: "https://www.youtube.com/results?search_query=computerphile+buffer+overflow", type: "Concept", note: "Understand why 'strcpy' is dangerous." }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Days 6-8: Pointers (The Core)",
+                    duration: "3 Days",
+                    icon: "brain",
+                    focus: "Memory Addressing (Critical)",
+                    items: [
+                        { id: 'd6_learn', text: "Day 6 Learn: Pointer basics (& and *)", tag: "Day 6" },
+                        { id: 'd6_code', text: "Day 6 Code: Print address, Modify value via ptr", tag: "Practice" },
+                        { id: 'd7_learn', text: "Day 7 Learn: Pointer Arithmetic & Arrays as Pointers", tag: "Day 7" },
+                        { id: 'd7_code', text: "Day 7 Code: Traverse array using pointers", tag: "Practice" },
+                        { id: 'd8_learn', text: "Day 8 Learn: Call by Reference (Modifying args)", tag: "Day 8" },
+                        { id: 'd8_code', text: "Day 8 Code: Swap 2 nums (ptr), Modify array in func", tag: "Practice" }
+                    ],
+                    resources: [
+                        { title: "CS50 Pointers Section", url: "https://www.youtube.com/results?search_query=cs50+pointers", type: "Video", note: "Best visualization of memory addresses." },
+                        { title: "Neso Academy: Pointers Playlist", url: "https://www.youtube.com/playlist?list=PLBlnK6fEyqRggZZgYpPMUxdY1CYkZtARR", type: "Video", note: "Watch videos 1-5 in order." }
+                    ]
+                },
+                {
+                    id: 4,
+                    title: "Days 9-10: Memory Management",
+                    duration: "2 Days",
+                    icon: "shield",
+                    focus: "Heap, Stack, & Leaks",
+                    items: [
+                        { id: 'd9_learn', text: "Day 9 Learn: malloc, free, Stack vs Heap", tag: "Day 9" },
+                        { id: 'd9_code', text: "Day 9 Code: Dynamic Array (malloc) & Free it", tag: "Practice" },
+                        { id: 'd10_learn', text: "Day 10 Learn: Memory Leaks & Use-After-Free", tag: "Day 10" },
+                        { id: 'd10_code', text: "Day 10 Code: Write a leak, then fix it", tag: "Debug" }
+                    ],
+                    resources: [
+                        { title: "CS50 Memory Section", url: "https://www.youtube.com/results?search_query=cs50+memory", type: "Video", note: "Understand dynamic allocation." },
+                        { title: "Neso Academy: Dynamic Memory", url: "https://www.youtube.com/results?search_query=neso+academy+dynamic+memory+allocation", type: "Video", note: "Deep dive into malloc/calloc." }
+                    ]
+                },
+                {
+                    id: 5,
+                    title: "Days 11-12: Structs & Files",
+                    duration: "2 Days",
+                    icon: "save",
+                    focus: "Data Structures & I/O",
+                    items: [
+                        { id: 'd11_learn', text: "Day 11 Learn: struct & Nested Structures", tag: "Day 11" },
+                        { id: 'd11_code', text: "Day 11 Code: Student struct, Array of structs", tag: "Practice" },
+                        { id: 'd12_learn', text: "Day 12 Learn: File I/O (fopen, fgets, fwrite)", tag: "Day 12" },
+                        { id: 'd12_code', text: "Day 12 Code: Write to file, Read from file", tag: "Practice" }
+                    ],
+                    resources: [
+                        { title: "Neso Academy: Structures", url: "https://www.youtube.com/results?search_query=neso+academy+structures+in+c", type: "Video", note: "Learn to group data." },
+                        { title: "C File Handling Tutorial", url: "https://www.geeksforgeeks.org/basics-of-file-handling-in-c-programming/", type: "Docs", note: "Focus on reading/writing text files." }
+                    ]
+                },
+                {
+                    id: 6,
+                    title: "Days 13-15: Security & Final Exam",
+                    duration: "3 Days",
+                    icon: "shield",
+                    focus: "Apply Knowledge & Exit C",
+                    items: [
+                        { id: 'd13_code', text: "Day 13: Vulnerable vs Secure Input Demo", tag: "Security" },
+                        { id: 'd13_think', text: "Day 13: Pointer Misuse Demo (Safe crash)", tag: "Security" },
+                        { id: 'd14_rev', text: "Day 14: Revision (Re-write Day 6-10 codes)", tag: "Revision" },
+                        { id: 'd15_test1', text: "FINAL TEST: Explain Stack vs Heap", tag: "Exam" },
+                        { id: 'd15_test2', text: "FINAL TEST: Program with malloc + free", tag: "Exam" },
+                        { id: 'd15_test3', text: "FINAL TEST: Explain Buffer Overflow", tag: "Exam" },
+                        { id: 'd15_test4', text: "FINAL TEST: Swap nums with Pointers", tag: "Exam" },
+                        { id: 'd15_done', text: "EXIT CONDITION: C Completed. Switch to Python.", tag: "DONE" }
+      ],
+      resources: [
+        { title: "Pwn.college (Optional)", url: "https://pwn.college/", type: "Advanced", note: "Only if you want deeper exploitation practice." }
+      ]
+                }
+            ];
+
+            // --- LocalStorage Logic (Same as GitHub repo mechanism) ---
+            useEffect(() => {
+                try {
+                    const saved = localStorage.getItem('cyber-c-tracker-v3');
+                    if (saved) setProgress(JSON.parse(saved));
+                } catch (e) {
+                    console.error("Storage access failed:", e);
+                }
+            }, []);
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('cyber-c-tracker-v3', JSON.stringify(progress));
+                } catch (e) {
+                    console.error("Storage save failed:", e);
+                }
+            }, [progress]);
+
+            // Fix for click responsiveness
+            const toggleItem = (id) => {
+                setProgress(prev => {
+                    const newState = { ...prev, [id]: !prev[id] };
+                    return newState;
                 });
-            });
-        });
+            };
 
-        let skillMatrixHTML = '';
-        for (const skill in skillsToTrack) {
-            skillMatrixHTML += `
-                <div class="skill-progress">
-                    <div class="skill-label">
-                        <span>${skill}</span>
-                        <span id="skill-perc-${skill}">0%</span>
-                    </div>
-                    <div class="skill-bar-bg">
-                        <div class="skill-bar" id="skill-bar-${skill}"></div>
-                    </div>
-                </div>
-            `;
-        }
-        skillMatrixContainer.innerHTML = skillMatrixHTML;
-    }
+            const toggleModule = (id) => setExpandedModules(prev => ({ ...prev, [id]: !prev[id] }));
+            const resetProgress = () => {
+                if (window.confirm("Are you sure you want to reset all progress?")) {
+                    setProgress({});
+                    localStorage.removeItem('cyber-c-tracker-v3');
+                }
+            };
 
+            const calculateTotalProgress = () => {
+                const totalItems = curriculum.reduce((acc, module) => acc + module.items.length, 0);
+                const completedItems = Object.values(progress).filter(Boolean).length;
+                return Math.round((completedItems / totalItems) * 100);
+            };
 
-    // 2. Render the main roadmap checklist
-    function renderRoadmap() {
-        let roadmapHTML = '';
-        roadmapData.forEach(weekData => {
-            roadmapHTML += `
-                <details class="week-container" ${weekData.week === 1 ? 'open' : ''}>
-                    <summary class="week-summary">Week ${weekData.week}: ${weekData.title}</summary>
-                    <div class="day-list">
-            `;
-            weekData.days.forEach(dayData => {
-                roadmapHTML += `<div class="day"><h4>&gt; Day ${dayData.day} <span>// ${dayData.date}</span></h4>`;
-                dayData.tasks.forEach(task => {
-                    const currentTaskId = `task-${taskIdCounter++}`;
-                    const tagClass = `tag-${task.tag.toLowerCase().split(' ')[0]}`;
-                    roadmapHTML += `
-                        <div class="task">
-                            <input type="checkbox" id="${currentTaskId}" class="task-checkbox" data-skill="${task.skill || 'general'}">
-                            <label for="${currentTaskId}">${task.text} <span class="tag ${tagClass}">${task.tag}</span></label>
+            const currentPercent = calculateTotalProgress();
+
+            return (
+                <div className="bg-neutral-950 text-green-400 p-4 md:p-8 selection:bg-green-900 selection:text-white min-h-full">
+                    <div className="max-w-3xl mx-auto space-y-8">
+                        {/* HEADER */}
+                        <header className="border-b border-green-800 pb-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h1 className="text-2xl md:text-4xl font-bold tracking-tighter text-white mb-2">
+                                        15-DAY C <span className="text-green-500">CRASH PLAN</span>
+                                    </h1>
+                                    <p className="text-neutral-400 text-sm md:text-base">
+                                        Protocol: Low-Level Understanding. No Competitive Coding.
+                                    </p>
+                                </div>
+                                <div className="text-right hidden md:block">
+                                    <div className="text-xs text-neutral-500 uppercase tracking-widest mb-1">Status</div>
+                                    <div className="text-xl font-bold text-white">{currentPercent}% BREACHED</div>
+                                </div>
+                            </div>
+                            
+                            {/* PROGRESS BAR */}
+                            <div className="mt-6 h-2 bg-neutral-900 rounded-full overflow-hidden border border-neutral-800">
+                                <div className="h-full bg-green-500 transition-all duration-500 ease-out shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                                     style={{ width: `${currentPercent}%` }} />
+                            </div>
+                            
+                            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                                <span className="bg-neutral-900 text-neutral-300 px-3 py-1 rounded border border-neutral-800">Time: 1-1.5 Hrs/Day</span>
+                                <span className="bg-green-900/30 text-green-300 px-3 py-1 rounded border border-green-800/50">Resources: 100% Free</span>
+                            </div>
+                        </header>
+
+                        {/* MODULES */}
+                        <div className="space-y-6">
+                            {curriculum.map((module) => (
+                                <div key={module.id} className="bg-neutral-900/50 border border-neutral-800 rounded-lg overflow-hidden transition-all hover:border-neutral-700">
+                                    <button onClick={() => toggleModule(module.id)} className="w-full flex items-center justify-between p-4 bg-neutral-900 border-b border-neutral-800 hover:bg-neutral-800/80 transition-colors text-left cursor-pointer">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded bg-neutral-950 border border-neutral-800 ${expandedModules[module.id] ? 'text-green-400' : 'text-neutral-500'}`}>
+                                                <Icon name={module.icon} className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-neutral-200">{module.title}</h3>
+                                                <div className="text-xs text-neutral-500 flex items-center gap-2 mt-1">
+                                                    <span>⏱ {module.duration}</span>
+                                                    <span className="w-1 h-1 bg-neutral-600 rounded-full"></span>
+                                                    <span className="text-green-700 font-semibold uppercase">{module.focus}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Icon name={expandedModules[module.id] ? "chevronUp" : "chevronDown"} className="w-5 h-5 text-neutral-500" />
+                                    </button>
+
+                                    {expandedModules[module.id] && (
+                                        <div className="p-4 space-y-6">
+                                            <div className="space-y-2">
+                                                {module.items.map((item) => (
+                                                    <label key={item.id} className={`flex items-start gap-3 p-3 rounded cursor-pointer transition-all group ${progress[item.id] ? 'bg-green-900/10 border border-green-900/30' : 'hover:bg-neutral-800 border border-transparent hover:border-neutral-700'}`}>
+                                                        <div className="relative flex items-center mt-0.5 z-10">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={progress[item.id] || false} 
+                                                                onChange={() => toggleItem(item.id)} 
+                                                                className="peer appearance-none w-5 h-5 border-2 border-neutral-600 rounded bg-neutral-950 checked:bg-green-400 checked:border-green-400 transition-colors cursor-pointer" 
+                                                            />
+                                                            <Icon name="check" className="absolute w-3.5 h-3.5 text-black pointer-events-none opacity-0 peer-checked:opacity-100 left-[3px] top-[3px] transition-opacity duration-200" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className={`text-sm md:text-base select-none ${progress[item.id] ? 'text-neutral-400 line-through' : 'text-neutral-200'}`}>{item.text}</div>
+                                                        </div>
+                                                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${progress[item.id] ? 'border-green-900/30 text-green-800' : 'border-neutral-700 text-neutral-500 group-hover:border-neutral-600'}`}>{item.tag}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-neutral-800">
+                                                <div className="flex items-center gap-2 mb-3 text-neutral-400 text-xs uppercase tracking-widest font-semibold">
+                                                    <Icon name="book" className="w-4 h-4 text-green-600" /> Intel (Direct Links)
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    {module.resources.map((res, idx) => (
+                                                        <a key={idx} href={res.url} target="_blank" rel="noopener noreferrer" className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 bg-neutral-950/50 p-2.5 rounded border border-neutral-800/50 hover:border-green-800/50 hover:bg-neutral-900 transition-all group/link">
+                                                            <div className="flex items-center gap-2 min-w-fit group-hover/link:text-green-400 transition-colors">
+                                                                <Icon name={res.type === 'Video' ? 'video' : 'link'} className="w-3.5 h-3.5 text-blue-400" />
+                                                                <span className="text-neutral-300 text-sm font-medium underline decoration-neutral-700 underline-offset-4 group-hover/link:decoration-green-500">{res.title}</span>
+                                                            </div>
+                                                            <div className="text-xs text-neutral-500 md:border-l md:border-neutral-800 md:pl-3 italic">"{res.note}"</div>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    `;
-                });
-                roadmapHTML += `</div>`;
-            });
-            roadmapHTML += `</div></details>`;
-        });
-        roadmapContainer.innerHTML = roadmapHTML;
-    }
 
-    // 3. Update all progress bars (main and skills)
-    function updateAllProgress() {
-        const checkboxes = document.querySelectorAll('.task-checkbox');
-        const totalTasks = checkboxes.length;
-        const completedTasks = document.querySelectorAll('.task-checkbox:checked').length;
-        
-        // Update main progress
-        const overallPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-        document.getElementById('main-progress-bar').style.width = `${overallPercentage}%`;
-        document.getElementById('main-progress-text').textContent = `${overallPercentage.toFixed(2)}%`;
+                        {/* RESTRICTED ZONE */}
+                        <div className="border border-red-900/30 bg-red-950/5 rounded-lg p-6">
+                            <div className="flex items-center gap-2 mb-4 text-red-400">
+                                <Icon name="skull" className="w-5 h-5" />
+                                <h3 className="font-bold uppercase tracking-wider">Restricted Zone (Do Not Learn)</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {["DSA / Linked Lists", "Competitive Coding", "Graphics / GUI", "Networking (Socket)"].map((bad, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 text-neutral-500 text-sm line-through decoration-red-900/50">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-900/50"></div>
+                                        {bad}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="mt-4 text-xs text-red-500/60 italic">*Attempting these will result in career latency. Stay focused on Python for builds.</p>
+                        </div>
 
-        // Reset skill counts
-        for (const skill in skillsToTrack) {
-            skillsToTrack[skill].total = 0;
-            skillsToTrack[skill].completed = 0;
-        }
+                        {/* FOOTER */}
+                        <div className="flex justify-between items-center pt-8 border-t border-neutral-800 text-neutral-600 text-sm">
+                            <div>System: <span className="text-neutral-400">Ready</span></div>
+                            <button onClick={resetProgress} className="flex items-center gap-2 hover:text-red-400 transition-colors">
+                                <Icon name="trash" className="w-4 h-4" /> Reset Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
-        // Recalculate skill counts
-        checkboxes.forEach(cb => {
-            const skill = cb.dataset.skill;
-            if (skillsToTrack[skill]) {
-                skillsToTrack[skill].total++;
-                if (cb.checked) {
-                    skillsToTrack[skill].completed++;
-                }
-            }
-        });
-
-        // Update skill matrix UI
-        for (const skill in skillsToTrack) {
-            const data = skillsToTrack[skill];
-            const skillPercentage = data.total > 0 ? (data.completed / data.total) * 100 : 0;
-            document.getElementById(`skill-bar-${skill}`).style.width = `${skillPercentage}%`;
-            document.getElementById(`skill-perc-${skill}`).textContent = `${Math.round(skillPercentage)}%`;
-        }
-        
-        saveProgress();
-    }
-    
-    // 4. Save and Load progress from localStorage
-    function saveProgress() {
-        const progress = [];
-        document.querySelectorAll('.task-checkbox').forEach(cb => {
-            progress.push(cb.checked);
-        });
-        localStorage.setItem('hackerTrackerProgressV2', JSON.stringify(progress));
-    }
-
-    function loadProgress() {
-        const savedProgress = JSON.parse(localStorage.getItem('hackerTrackerProgressV2'));
-        if (savedProgress) {
-            document.querySelectorAll('.task-checkbox').forEach((cb, index) => {
-                if (savedProgress[index]) {
-                    cb.checked = true;
-                }
-            });
-        }
-    }
-
-    // --- Initial Execution ---
-    initializeSkills();
-    renderRoadmap();
-    loadProgress();
-    updateAllProgress();
-
-    roadmapContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('task-checkbox')) {
-            updateAllProgress();
-        }
-    });
-
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CyberTracker />);
     </script>
 </body>
 </html>
-
